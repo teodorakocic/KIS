@@ -1,0 +1,41 @@
+1. Find all places where people can park (without materialized view)
+
+	EXPLAIN(ANALYZE, BUFFERS, COSTS, SETTINGS)
+	SELECT osm_id AS parkingID, name AS parking, ST_X(ST_Transform(ST_Centroid(way), 4326)) as longitude, ST_Y(ST_Transform(ST_Centroid(way), 4326)) as latitude FROM public.planet_osm_polygon
+	WHERE building='parking' OR amenity='parking'
+	AND ST_X(ST_Transform(ST_Centroid(way), 4326)) BETWEEN -74.0 AND -73.0
+	AND ST_Y(ST_Transform(ST_Centroid(way), 4326)) BETWEEN 42.0 AND 44.0;
+	
+	- https://explain.depesz.com/s/6wh9
+	
+2. Create Materialized View 
+
+	CREATE MATERIALIZED VIEW public.planet_osm_polygon_mv AS 
+	SELECT ROW_NUMBER () OVER (ORDER BY p.osm_id, p.name, ST_Subdivide(p.way))::BIGINT AS gid, p.osm_id, ST_Subdivide(p.way) AS way
+	FROM public.planet_osm_polygon p 
+	WHERE p.building='parking' OR p.amenity='parking';
+	
+3. Create indexes 
+
+	- CREATE UNIQUE INDEX uq_public_planet_osm_polygon_mv 
+		ON public.planet_osm_polygon_mv(gid);
+		
+	- CREATE INDEX gix_public_planet_osm_polygon_mv_subdivide
+		ON public.planet_osm_polygon_mv USING GIST(way);	
+	
+4. 	Find all places where people can park (with materialized view)
+
+	EXPLAIN(ANALYZE, BUFFERS, COSTS, SETTINGS)
+	SELECT osm_id AS parkingID, name AS parking, ST_X(ST_Transform(ST_Centroid(way), 4326)) as longitude, ST_Y(ST_Transform(ST_Centroid(way), 4326)) as latitude FROM public.planet_osm_polygon_mv 
+	WHERE ST_X(ST_Transform(ST_Centroid(way), 4326)) BETWEEN -74.0 AND -73.0
+	AND ST_Y(ST_Transform(ST_Centroid(way), 4326)) BETWEEN 42.0 AND 44.0;
+	
+	- https://explain.depesz.com/s/dqpJ#html
+	
+5. Find all municipality for NYC
+
+	SELECT DISTINCT m.name
+	FROM public.planet_osm_point m
+	WHERE m.place='municipality';
+
+	
