@@ -1,0 +1,4 @@
+psycopg2==2.9.5
+load_dotenv==0.1.0
+scipy==1.10.0
+paho.mqtt==1.6.1

@@ -1,10 +1,8 @@
-version: '3.4'
+version: "3.8"
 
 volumes:
-  db-data:
-  log-data:
-  consul-config:
-  consul-data:
+  local_pgdata:
+  pgadmin-data:
 
 services:
 
@@ -15,10 +13,38 @@ services:
     container_name: mosquitto
     hostname: mosquitto
     networks:
-      - bde
+      - master
     volumes:
       - "./conf:/mosquitto/config"
 
+  postgres:
+    image: postgres:15.1
+    container_name: postgres
+    hostname: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: superuser
+      PG_DATABASE: 'new_york'
+    volumes:
+      - local_pgdata:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    networks:
+      - master
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: superadmin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
 networks:
-  bde:
+  master:
     driver: "bridge"
