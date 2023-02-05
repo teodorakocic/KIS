@@ -62,7 +62,11 @@ def postgis_connection_and_queries():
                                     )
 
         connection.autocommit = True 
-        postgre_fetch_parkings = 'SELECT osm_id AS parkingID, name AS parking, ST_X(ST_Transform(ST_Centroid(way), 4326)) as longitude, ST_Y(ST_Transform(ST_Centroid(way), 4326)) as latitude FROM public.planet_osm_polygon_mv WHERE ST_X(ST_Transform(ST_Centroid(way), 4326)) BETWEEN -74.0 AND -73.0 AND ST_Y(ST_Transform(ST_Centroid(way), 4326)) BETWEEN 42.0 AND 44.0'
+        postgre_fetch_parkings = \
+        'SELECT osm_id AS parkingID, name AS parking, ST_X(ST_Transform(ST_Centroid(way), 4326)) as longitude, \
+            ST_Y(ST_Transform(ST_Centroid(way), 4326)) as latitude FROM public.planet_osm_polygon_mv WHERE \
+                 ST_X(ST_Transform(ST_Centroid(way), 4326)) BETWEEN -74.0 AND -73.0 AND \
+                    ST_Y(ST_Transform(ST_Centroid(way), 4326)) BETWEEN 42.0 AND 44.0'
         cursor = connection.cursor()
         cursor.execute('SELECT %s as connected;', ('Connection to postgres successful!',))
         print(cursor.fetchone())
@@ -167,15 +171,21 @@ def generate_gps_coordinates():
                 record[client] = topic
 
                 if free_space <= 0:
-                    payload = 'New vehicle in the area ' + parking_region[index] + '. The vehicle entered parking ' + name[index] + ' with coordinates: { latitude: ' + str(location[index][0][0]) + '\t longitude: ' + str(location[index][0][1]) + ' }. No more free parking spaces left within this parking area!'
+                    payload = 'New vehicle in the area ' + parking_region[index] + \
+                        '. The vehicle entered parking ' + name[index] + ' with coordinates: \
+                            { latitude: ' + str(location[index][0][0]) + '\t longitude: ' + \
+                                str(location[index][0][1]) + ' }. No more free parking spaces left within this parking area!'
                 else:
-                    payload = 'New vehicle in the area ' + parking_region[index] + '. The vehicle entered parking ' + name[index] + ' with coordinates: { latitude: ' + str(location[index][0][0]) + '\t longitude: ' + str(location[index][0][1]) + ' }. Number of free parking spaces in this parking area is now ' + str(free_space) + '!'
+                    payload = 'New vehicle in the area ' + parking_region[index] + \
+                        '. The vehicle entered parking ' + name[index] + ' with coordinates: { latitude: ' \
+                            + str(location[index][0][0]) + '\t longitude: ' + str(location[index][0][1]) + ' }. \
+                                Number of free parking spaces in this parking area is now ' + str(free_space) + '!'
 
                 client.publish(topic, payload)
 
                 expiring_parking()
 
-                print('----------------------------------------------new vehicle approaching----------------------------------------------------\n')
+                print('-'*50 + 'new vehicle approaching' + '-'*50 + '\n')
             
             sleep(random.randint(1,5))
 
